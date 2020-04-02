@@ -19,54 +19,95 @@ X, X_test, y, y_test = train_test_split(iris_dataset['data'], iris_dataset['targ
 
 # 首先选取维度2 3 进行绘图  之后进行分类即可
 experiment_data=X[:,2:4]
-print(experiment_data.shape)
-plt.scatter(experiment_data[:,0],experiment_data[:,1])
+'''print(experiment_data.shape)'''
+xx=experiment_data[:,0]
+yy=experiment_data[:,1]
+
+#初始化点
+def get_points(xx,yy,k):
+    maxx=np.max(xx)
+    mix=np.min(xx)
+    may=np.max(yy)
+    miy=np.min(yy)
+    points=np.zeros((k,2))
+    for i in range(k):
+        x=np.random.rand()*(maxx-mix)+mix
+        y=np.random.rand()*(may-miy)+miy
+        points[i,0]=x
+        points[i,1]=y
+
+    return points
+
+tmp=get_points(xx,yy,2)
+k=2
+for i in range(k):
+    plt.scatter(tmp[i,0],tmp[i,1],color='red')
+
+plt.scatter(experiment_data[:,0],experiment_data[:,1],color='blue')
 plt.show()
 
-x=7*np.random.rand()
-y=2.5*np.random.rand()
-print(x,y)
-xx,yy=experiment_data.shape
-print(xx,yy)
-def kmeans(data,k=2):
+#求出两点间的距离
+def distance(p1,p2):
+    det_x=p1[0]-p2[0]
+    det_y=p1[1]-p2[1]
+    tmp = (det_x** 2)+(det_y**2)
+    return np.sqrt(tmp)
+#下面写分类函数
+def type(cen1,cen2,p):
+    dis1=distance(p,cen1)
+    dis2=distance(p,cen2)
+    if dis1>dis2:
+        return 1
+    else:
+        return 2
 
-    #  生成简陋的随机数
-    def _rand_center(data,k):
-        x1 = 7 * np.random.rand()
-        y1 = 2.5 * np.random.rand()
-        x2 = 7 * np.random.rand()
-        y2 = 2.5 * np.random.rand()
-        sca=np.zeros((2,2))
-        sca[0,0]=x1
-        sca[0,1]=y1
-        sca[1,0]=x2
-        sca[1,1]=y2
-        return sca
-    def _distance(p1,p2):
-        tmp=np.sum((p1-p2)**2)
-        return np.sqrt(tmp)
-    def _end_process(sca1,sca2):
-        set1=set([tuple(c) for c in sca1])
-        set2=set([tuple(c) for c in sca2])
-        return (set1 == set2)
+def total_type(experiment_data,tmp):
+    xx,yy=experiment_data.shape
+    ttyypp=np.zeros((xx,1))
+    for i in range(xx):
+        ttyypp[i,0]=type(tmp[0,:],tmp[1,:],experiment_data[i,:])
+    return ttyypp
+    #以上操作完成分类
 
-    data=experiment_data
-    sca_ini=_rand_center(data,2)
+def renew(ttyypp,data,k):
     xx,yy=data.shape
-    label=np.zeros(xx,1)
-    process=False
-    new_sca=sca_ini
-    k=2
-    while not process:
-        old_sca =np.copy(new_sca)
-        min_dist,min_index=np.inf,-1
-        for i in range(xx):
-            for j in range(k):
-                dist=_distance(data[i],new_sca[j])
-                if dist<min_dist:
-                    min_dist,min_index=dist,j
-                    label[i]=j
+    x1=y1=x2=y2=0
+    points = np.zeros((k, 2))
+    c1=c2=0;
+    for i in range(xx):
+        if ttyypp[i,0]==1:
+            x1+=data[i,0]
+            y1+=data[i,1]
+            c1+=1
+        else:
+            x2+=data[i,0]
+            y2+=data[i,1]
+            c2+=1
+    points[0,0]=x1/c1
+    points[0,1]=y1/c1
+    points[1,0]=x2/c2
+    points[1,1]=y2/c2
+    return points
 
 
-# 在这里随机点难道一直随机生成么？
-#  今晚好像暂时做不出来了
+#下面是主循环
+xx=experiment_data[:,0]
+yy=experiment_data[:,1]
+tmp=get_points(xx,yy,2)
+k=2
+ttyypp=np.zeros((112,1))
+for i in range(10000):
+    ttyypp=total_type(experiment_data,tmp)
+    tmp=renew(ttyypp,experiment_data,k)
+
+
+
+for i in range(2):
+        plt.scatter(tmp[i,0],tmp[i,1],color='red',s=100)
+for i in range(112):
+    if ttyypp[i]==1:
+        plt.scatter(experiment_data[i:,0],experiment_data[i:,1],color='g')
+    else:
+        plt.scatter(experiment_data[i:,0],experiment_data[i:,1],color='b')
+
+plt.show()
